@@ -1,6 +1,6 @@
 import numpy as np
 GripperHeight = 100
-Depth = 25
+Depth = 10
 GripperWidth = 30
 Theta = np.arctan2(GripperHeight, GripperWidth)
 Phi = np.arctan2(GripperWidth, GripperHeight)
@@ -17,3 +17,7 @@ NBars = 9
 
 NRowsTactile = 10
 NColsTactile = 4
+
+#lO NUEVO 
+
+DepthOuter = 13  # Profundidad de la pared externa
