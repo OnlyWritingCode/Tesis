@@ -1,11 +1,15 @@
 import serial
 import time
+import os  # Importamos el módulo os para trabajar con rutas
 
 # Configura el puerto serial (ajusta '/dev/ttyACM0' al puerto correspondiente de tu Arduino si es diferente)
 SerialObj = serial.Serial('/dev/ttyACM0', 9600, timeout=1)  
 
-# Nombre del archivo donde se guardarán los datos
-output_file = "../MlxInfo.txt"
+# Obtener la ruta absoluta del directorio donde se encuentra el script
+script_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Nombre del archivo donde se guardarán los datos (en la misma carpeta que el script)
+output_file = os.path.join(script_dir, "MlxInfo.txt")
 
 while True:
     try:

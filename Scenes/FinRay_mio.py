@@ -36,6 +36,7 @@ class Controller(Sofa.Core.Controller):
         self.ContactRowIdx = 3
         self.DesiredLengthPercentage = 0.8
         # self.Dirty2CleanIdxList = kwargs['Dirty2CleanIdxList']
+        self.mlx_info_path = os.path.join(ThisPath, 'MlxInfo.txt')
         
     
     def mapCapCoordinatesTo3DCoords(self):
@@ -60,45 +61,28 @@ class Controller(Sofa.Core.Controller):
         print("AnimateBeginEvent")
         
         self.mapCapCoordinatesTo3DCoords()
-        self.CableEffector.desiredLength.value = self.CableEffector.cableInitialLength.value * self.DesiredLengthPercentage
-        # Imprimir valores iniciales
-        print("Valores iniciales al iniciar la animación:")
-        print(f" - DesiredLengthPercentage: {self.DesiredLengthPercentagFinRaye}")
-        print(f" - CableEffector.cableInitialLength: {self.CableEffector.cableInitialLength.value}")
-        print(f" - CableEffector.desiredLength antes de actualizar: {self.CableEffector.desiredLength.value}")
-        
-        #self.CableEffector.desiredLength.value = self.CableEffector.cableInitialLength.value * self.DesiredLengthPercentage
-        
-        
-        # Ruta del archivo MlxInfo.txt en el escritorio
-        file_path = '/home/bayron/Desktop/FinRay_Final/Scenes/MlxInfo.txt'
+        self.mlx_info_path = os.path.join(ThisPath, 'MlxInfo.txt')
 
-        # Leer el valor desde el archivo MlxInfo.txt
         try:
-            with open(file_path, 'r') as file:
+            with open(self.mlx_info_path, 'r') as file:
                 content = file.read().strip()
                 pot_value = float(content)
                 # Verificar si el valor está entre 0 y 1023
-                if 0 <= pot_value <= 1023:
-                    print(f"Valor del potenciómetro leído: {pot_value}")
-                else:
-                    print(f"Valor fuera de rango: {pot_value}. Usando valor por defecto 0.")
-                    pot_value = 0  # Valor por defecto si el valor está fuera de rango
+            if 0 <= pot_value <= 1023:
+                print(f"Valor del potenciómetro leído: {pot_value}")
+            else:
+                print(f"Valor fuera de rango: {pot_value}. Usando valor por defecto 0.")
+                pot_value = 0  # Valor por defecto si el valor está fuera de rango
         except Exception as e:
             print(f"Error al leer el archivo MlxInfo.txt: {e}")
             pot_value = 0  # Valor por defecto en caso de error
 
-        # Aquí puedes usar pot_value para otras operaciones más adelante
-
-        # Imprimir el desiredLength después de la posible actualización (si es que está siendo actualizado en algún otro lugar)
-        print(f" - CableEffector.desiredLength después de actualizar: {self.CableEffector.desiredLength.value}")
-        
         # Mapear el valor del potenciómetro al rango deseado (1.0 a 0.55)
         pot_min = 0      # Valor mínimo del potenciómetro
         pot_max = 1023   # Valor máximo del potenciómetro
         percentage_max = 1.0    # Porcentaje máximo (estado de reposo)
         percentage_min = 0.55   # Porcentaje mínimo (máxima contracción permitida)
-        
+
         # Calcular DesiredLengthPercentage
         self.DesiredLengthPercentage = percentage_min + ((pot_max - pot_value) / (pot_max - pot_min)) * (percentage_max - percentage_min)
 
