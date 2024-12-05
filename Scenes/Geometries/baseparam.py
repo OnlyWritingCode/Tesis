@@ -39,7 +39,7 @@ newtag = FuseOut4[0][0][1]
 ############################ AQUI ME GUSTARIA AGREGAR LA FORMA DE DONUT ##############################################
 
 # Definir los radios mayor y menor del toroide
-r_major = cbase.ancho_base / 6       # Radio mayor
+r_major = cbase.ancho_base / 7       # Radio mayor
 r_minor = cbase.largo_base_cable / 4  # Radio menor
 
 # Crear el toroide en el origen
@@ -77,6 +77,9 @@ final_tag = FragmentOut[0][0][1]
 gmsh.model.occ.removeAllDuplicates()
 
 ############################ FIN DE LA SECCIÓN DEL TOROIDE ###########################################################
+
+Ala = gmsh.model.occ.addBox(-10, 0, 0, -20,21.5,1)
+Ala2 = gmsh.model.occ.addBox(101,0,0 ,10, 21.5, 1)
 
 # Sincronizar antes de generar la malla
 gmsh.model.occ.synchronize()
