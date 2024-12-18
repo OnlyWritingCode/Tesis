@@ -3,7 +3,7 @@ import time
 import os  # Importamos el módulo os para trabajar con rutas
 
 # Configura el puerto serial (ajusta '/dev/ttyACM0' al puerto correspondiente de tu Arduino si es diferente)
-SerialObj = serial.Serial('/dev/ttyACM0', 9600, timeout=1)  
+SerialObj = serial.Serial('/dev/ttyACM1', 9600, timeout=1)  
 
 # Obtener la ruta absoluta del directorio donde se encuentra el script
 script_dir = os.path.dirname(os.path.abspath(__file__))

@@ -18,8 +18,8 @@ NBars = 8
 NRowsTactile = 10
 NColsTactile = 4
 
-sangria_grilla = 0.5  # Margen desde los bordes en el eje Z (mm)
-cantidad_grilla_vertical = 4  # Número deseado de líneas verticales
+sangria_grilla = 1  # Margen desde los bordes en el eje Z (mm)
+cantidad_grilla_vertical = 3  # Número deseado de líneas verticales
 
 sangria_grilla_horizontal = 2 
 cantidad_grilla_horizontal = 6  # Número deseado de líneas horizontales
