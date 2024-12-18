@@ -3,7 +3,7 @@ import time
 import os  # Importamos el módulo os para trabajar con rutas
 
 # Configura el puerto serial (ajusta '/dev/ttyACM0' al puerto correspondiente de tu Arduino si es diferente)
-SerialObj = serial.Serial('/dev/ttyACM1', 9600, timeout=1)  
+SerialObj = serial.Serial('/dev/ttyACM0', 9600, timeout=1)  
 
 # Obtener la ruta absoluta del directorio donde se encuentra el script
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -22,12 +22,13 @@ while True:
         # Verifica que el dato recibido sea un número válido
         if Decoded.isdigit():
             pot_value = int(Decoded)
+            distance_value = pot_value/1023.0 * 60
 
             # Guarda el valor en el archivo de texto
             with open(output_file, "w") as file:
-                file.write(f"{pot_value}")
+                file.write(f"{pot_value},{distance_value}")
 
-            print(f"Valor del potenciómetro guardado: {pot_value}")
+            print(f"Valor del potenciómetro guardado: {pot_value}, {distance_value}")
 
         # Espera un breve momento antes de leer nuevamente
         time.sleep(0)
@@ -38,3 +39,4 @@ while True:
     except Exception as e:
         print(f"Error de lectura o guardado: {e}")
         pass
+
