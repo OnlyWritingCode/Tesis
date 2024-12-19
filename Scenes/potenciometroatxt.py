@@ -26,9 +26,9 @@ while True:
 
             # Guarda el valor en el archivo de texto
             with open(output_file, "w") as file:
-                file.write(f"{pot_value},{distance_value}")
+                file.write(f"{distance_value}")
 
-            print(f"Valor del potenciómetro guardado: {pot_value}, {distance_value}")
+            print(f"Valor del potenciómetro guardado (mm): {distance_value}")
 
         # Espera un breve momento antes de leer nuevamente
         time.sleep(0)

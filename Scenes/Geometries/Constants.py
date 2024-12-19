@@ -15,8 +15,8 @@ BarThinLength = 3
 
 NBars = 8
 
-NRowsTactile = 10
-NColsTactile = 4
+NRowsTactile = 6
+NColsTactile = 6
 
 sangria_grilla = 1  # Margen desde los bordes en el eje Z (mm)
 cantidad_grilla_vertical = 3  # Número deseado de líneas verticales

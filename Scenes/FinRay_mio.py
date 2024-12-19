@@ -33,15 +33,20 @@ class Controller(Sofa.Core.Controller):
         self.SphereROI2 = kwargs['SphereROI2']
         self.FPA = kwargs['FPA']
         self.CableEffector = kwargs['CableEffector']
+        self.ContactColIdx = 3
         self.ContactRowIdx = 3
-        self.DesiredLengthPercentage = 0.8
+        self.DesiredLengthPercentage = 1.0
         # self.Dirty2CleanIdxList = kwargs['Dirty2CleanIdxList']
         self.mlx_info_path = os.path.join(ThisPath, 'MlxInfo.txt')
         
     
     def mapCapCoordinatesTo3DCoords(self):
         WeightList = np.ones(Constants.NRowsTactile*Constants.NColsTactile)        
-        IdxList = [[1,self.ContactRowIdx],[1,self.ContactRowIdx+1], [2,self.ContactRowIdx],[2,self.ContactRowIdx+1]]
+        IdxList = [
+        [self.ContactColIdx, self.ContactRowIdx],
+        [self.ContactColIdx, self.ContactRowIdx+1],
+        [self.ContactColIdx+1, self.ContactRowIdx],
+        [self.ContactColIdx+1, self.ContactRowIdx+1]]
         NContactPoints = 4
         print(f"WeightList:{WeightList}" )
         print(f"IdxList:{IdxList}" )
@@ -66,37 +71,64 @@ class Controller(Sofa.Core.Controller):
         try:
             with open(self.mlx_info_path, 'r') as file:
                 content = file.read().strip()
-                pot_value = float(content)
-                # Verificar si el valor está entre 0 y 1023
-            if 0 <= pot_value <= 1023:
-                print(f"Valor del potenciómetro leído: {pot_value}")
-            else:
-                print(f"Valor fuera de rango: {pot_value}. Usando valor por defecto 0.")
-                pot_value = 0  # Valor por defecto si el valor está fuera de rango
+                mm_value = float(content)
+                print(f"Valor del potenciómetro leído (mm): {mm_value}")
         except Exception as e:
             print(f"Error al leer el archivo MlxInfo.txt: {e}")
-            pot_value = 0  # Valor por defecto en caso de error
+            mm_value = 0.0  # Valor por defecto
 
-        # Mapear el valor del potenciómetro al rango deseado (1.0 a 0.55)
-        pot_min = 0      # Valor mínimo del potenciómetro
-        pot_max = 1023   # Valor máximo del potenciómetro
-        percentage_max = 1.0    # Porcentaje máximo (estado de reposo)
-        percentage_min = 0.55   # Porcentaje mínimo (máxima contracción permitida)
+        # Definimos los rangos
+        pot_min_mm = 0.0   # Valor mínimo en mm
+        pot_max_mm = 11.0  # Valor máximo en mm (aproximado)
+        percentage_max = 1.0  # Porcentaje máximo (reposo)
+        percentage_min = 0.4  # Porcentaje mínimo (flexión máxima con 11 mm)
+
+        # Limitamos mm_value al rango esperado
+        if mm_value < pot_min_mm:
+            mm_value = pot_min_mm
+        if mm_value > pot_max_mm:
+            mm_value = pot_max_mm
 
         # Calcular DesiredLengthPercentage
-        self.DesiredLengthPercentage = percentage_min + ((pot_max - pot_value) / (pot_max - pot_min)) * (percentage_max - percentage_min)
-
-        # Asegurar que DesiredLengthPercentage esté dentro de los límites
-        self.DesiredLengthPercentage = max(min(self.DesiredLengthPercentage, percentage_max), percentage_min)
+        # Queremos una relación lineal decreciente:
+        # 0 mm = 1.0, 11 mm = 0.3
+        # Fórmula lineal: Desired = max - ( (mm_value - pot_min_mm) / (pot_max_mm - pot_min_mm) ) * (max - min)
+        self.DesiredLengthPercentage = percentage_max - ((mm_value - pot_min_mm) / (pot_max_mm - pot_min_mm)) * (percentage_max - percentage_min)
 
         print(f"DesiredLengthPercentage ajustado: {self.DesiredLengthPercentage}")
 
         # Actualizar el desiredLength del CableEffector
         self.CableEffector.desiredLength.value = self.CableEffector.cableInitialLength.value * self.DesiredLengthPercentage
-
-        # Imprimir el desiredLength actualizado
         print(f"CableEffector.desiredLength actualizado: {self.CableEffector.desiredLength.value}")
 
+         # -----------------------------------------
+        # Nuevo bloque para leer y mostrar Coord.txt
+        # Ajusta la ruta si es necesario. Suponemos que está un nivel arriba.
+        try:
+            WeightedAvg = np.loadtxt(ThisPath + '../Coord.txt')
+            x_sensor = WeightedAvg[0]
+            y_sensor = WeightedAvg[1]
+            print(f"Coordenadas leídas de Coord.txt: x={x_sensor}, y={y_sensor}")
+
+            # Calcular ContactRowIdx a partir de y_sensor
+            self.ContactRowIdx = int(round(1 + (y_sensor*6.0/5.0)))
+            if self.ContactRowIdx < 0:
+                self.ContactRowIdx = 0
+            if self.ContactRowIdx > 4:
+                self.ContactRowIdx = 4
+
+            # Calcular ContactColIdx a partir de x_sensor
+            self.ContactColIdx = int(round(1 + (x_sensor*6.0/5.0)))
+            if self.ContactColIdx < 0:
+                self.ContactColIdx = 0
+            if self.ContactColIdx > 4:
+                self.ContactColIdx = 4
+
+            print(f"ContactRowIdx ajustado: {self.ContactRowIdx}")
+            print(f"ContactColIdx ajustado: {self.ContactColIdx}")
+        except Exception as e:
+            print(f"Error al leer o procesar Coord.txt: {e}") 
+    # -----------------------------------------
     
     def onKeypressedEvent(self, c):
         pass
@@ -226,13 +258,14 @@ def createScene(rootNode):
                 P1 = np.array([-Constants.WallThickness, Constants.GripperHeight])
                 
                 Vec = P1-P0
+                
                 Length = np.linalg.norm(Vec)
                 SubdivisionU = np.linspace(0,1,Constants.NRowsTactile)
                 SubdivisionV = np.linspace(0,1,Constants.NColsTactile)
-                
-                for u in SubdivisionU:
-                    for v in SubdivisionV:
-                        Coord = np.append(u*Vec+P0, v*Constants.Depth)
+                expansion_factor = 2.0 
+                for u_val in SubdivisionU:
+                    for v_val in SubdivisionV:
+                        Coord = np.append(u_val * Vec + P0, v_val * (Constants.Depth * expansion_factor))
                         CoordsList.append(Coord.tolist())
                 
                 ContactNode = FinRay.addChild("ContactNode")
