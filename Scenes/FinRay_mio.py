@@ -203,13 +203,7 @@ def createScene(rootNode):
                 # Coords = np.concatenate((MeshGrid[0].reshape((NumberOfThreads**2,1)),MeshGrid[1].reshape((NumberOfThreads**2,1)), np.ones((NumberOfThreads**2,1))*30),axis=1)
                 # CoordsList = Coords.tolist()
                 
-                # print(Coords)
-                
-                # ContactNode = FinRay.addChild("ContactNode")
-                # ContactNodeMO = ContactNode.addObject("MechanicalObject", position=CoordsList, showColor=[0,0,200], showObjectScale=10, showObject=True)
-                # ContactNode.addObject("BarycentricMapping")
-                
-                
+                # print(Coordsself.ContactColIdx = int(round(1 + (x_sensor*6.0/5.0)))
                 #---------------------------------
                 # Goal and Position Effector
                 #---------------------------------                                                
