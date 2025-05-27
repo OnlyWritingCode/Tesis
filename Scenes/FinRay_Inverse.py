@@ -193,8 +193,8 @@ def createScene(rootNode):
                 CablePoints = []
                 
                 NPoints = 20
-                P0 = np.array([-Constants.GripperWidth, 0, Constants.Depth/2])
-                P1 = np.array([Constants.WallThickness, Constants.GripperHeight, Constants.Depth/2])
+                P0 = np.array([-Constants.AnchoPinza, 0, Constants.Profundidad/2])
+                P1 = np.array([Constants.EspesorPared, Constants.AlturaPinza, Constants.Profundidad/2])
                 
                 Vec = P1-P0
                 Length = np.linalg.norm(Vec)
@@ -208,7 +208,7 @@ def createScene(rootNode):
                 cable.addObject('MechanicalObject', name='cable',
                                 position=CablePoints)
                 # cable.addObject('CableEffector', desiredLength=Length*.99, indices=list(range(NPoints//2,NPoints)), pullPoint=[Constants.GripperWidth, 0, Constants.Depth/2])
-                CableEffector = cable.addObject('CableEffector', indices=[NPoints//3], pullPoint=[Constants.GripperWidth, 0, Constants.Depth/2])
+                CableEffector = cable.addObject('CableEffector', indices=[NPoints//3], pullPoint=[Constants.AnchoPinza, 0, Constants.Profundidad/2])
                 
                 cable.addObject('BarycentricMapping')
                 
@@ -220,8 +220,8 @@ def createScene(rootNode):
                 
                 CoordsList = []
                 
-                P0 = np.array([-Constants.GripperWidth, 0])
-                P1 = np.array([-Constants.WallThickness, Constants.GripperHeight])
+                P0 = np.array([-Constants.AnchoPinza, 0])
+                P1 = np.array([-Constants.EspesorPared, Constants.AlturaPinza])
                 
                 Vec = P1-P0
                 Length = np.linalg.norm(Vec)
@@ -230,7 +230,7 @@ def createScene(rootNode):
                 
                 for u in SubdivisionU:
                     for v in SubdivisionV:
-                        Coord = np.append(u*Vec+P0, v*Constants.Depth)
+                        Coord = np.append(u*Vec+P0, v*Constants.Profundidad)
                         CoordsList.append(Coord.tolist())
                 
                 ContactNode = FinRay.addChild("ContactNode")

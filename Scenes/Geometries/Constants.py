@@ -1,19 +1,24 @@
 import numpy as np
-GripperHeight = 100
-Depth = 25
-GripperWidth = 30
-Theta = np.arctan2(GripperHeight, GripperWidth)
-Phi = np.arctan2(GripperWidth, GripperHeight)
-GripperHeightGift = 2
+AlturaPinza = 100
+Profundidad = 25
+AnchoPinza = 30
+Theta = np.arctan2(AlturaPinza, AnchoPinza)
+Phi = np.arctan2(AnchoPinza, AlturaPinza)
+AlturaPinzaExtra = 2
 
-WallThickness = 3 
+EspesorPared = 3 
 
 
-BarHeightThick = 2
-BarHeightThin = 1
-BarThinLength = 3
+AlturaBarraGruesa = 2
+AlturaBarraDelgada = 1
+LargoBarraDelgada = 3
 
 NBars = 9
 
 NRowsTactile = 10
 NColsTactile = 4
+
+
+GrillaHorizontal = 15 
+
+AnchoBarraGrilla = 1
