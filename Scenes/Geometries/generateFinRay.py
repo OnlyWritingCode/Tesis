@@ -42,7 +42,7 @@ def addLines(PointTags, Close=True):
 ## FUNCION DE AGREGADO DE LINEAS ##
 
 ## FUNCION DE CREAR PUNTOS ##
-def puntosEntreP2yP3(coordP2, coordP3, n_barras):
+def crear_puntos(coordP2, coordP3, n_barras):
     x0, y0, z0 = coordP2
     print(x0, y0, z0)
     x1, y1, z1 = coordP3
@@ -126,7 +126,7 @@ factory.synchronize()
 ## CREAR GRILLA ## 
 coordP2 = [Constants.AnchoPinza, 0, 0]
 coordP3 = [Constants.EspesorPared, Constants.AlturaPinza+Constants.AlturaPinzaExtra,0]
-puntos_grilla = puntosEntreP2yP3(coordP2, coordP3, Constants.GrillaHorizontal)
+puntos_grilla = crear_puntos(coordP2, coordP3, Constants.GrillaHorizontal)
 
 cilindroTags = []
 for punto in puntos_grilla:
@@ -136,38 +136,34 @@ for punto in puntos_grilla:
 
 
 # --- Definir los vértices del rectángulo de la pared --- #
-p_sup_izq = [3, 102, 25]    # Superior izquierdo
-p_sup_der = [30, 0, 25]     # Superior derecho
-p_inf_izq = [3, 102, 0]     # Inferior izquierdo
-p_inf_der = [30, 0, 0]      # Inferior derecho
+p_sup_izq = [Constants.EspesorPared, 102, Constants.Profundidad]    # Superior izquierdo
+p_sup_der = [Constants.AnchoPinza, 0, Constants.Profundidad]     # Superior derecho
+p_inf_izq = [Constants.EspesorPared, 102, 0]     # Inferior izquierdo
+p_inf_der = [Constants.AnchoPinza, 0, 0]      # Inferior derecho
 
-# --- Parámetros de la grilla --- #
-n_horizontales = 8     # Cantidad de barras horizontales
-n_verticales = 8       # Cantidad de barras verticales
-radio = Constants.radio
 
 # --- BARRAS HORIZONTALES (de lado a lado, siguiendo la inclinación) --- #
-xs_izq = np.linspace(p_inf_izq[0], p_sup_izq[0], n_horizontales + 2)
-ys_izq = np.linspace(p_inf_izq[1], p_sup_izq[1], n_horizontales + 2)
-zs_izq = np.linspace(p_inf_izq[2], p_sup_izq[2], n_horizontales + 2)
+xs_izq = np.linspace(p_inf_izq[0], p_sup_izq[0], Constants.GrillaVertical + 2)
+ys_izq = np.linspace(p_inf_izq[1], p_sup_izq[1], Constants.GrillaVertical + 2)
+zs_izq = np.linspace(p_inf_izq[2], p_sup_izq[2], Constants.GrillaVertical + 2)
 
-xs_der = np.linspace(p_inf_der[0], p_sup_der[0], n_horizontales + 2)
-ys_der = np.linspace(p_inf_der[1], p_sup_der[1], n_horizontales + 2)
-zs_der = np.linspace(p_inf_der[2], p_sup_der[2], n_horizontales + 2)
+xs_der = np.linspace(p_inf_der[0], p_sup_der[0], Constants.GrillaVertical + 2)
+ys_der = np.linspace(p_inf_der[1], p_sup_der[1], Constants.GrillaVertical + 2)
+zs_der = np.linspace(p_inf_der[2], p_sup_der[2], Constants.GrillaVertical + 2)
 
-for i in range(1, n_horizontales + 1):
+for i in range(1, Constants.GrillaVertical + 1):
     p_ini = [xs_izq[i], ys_izq[i], zs_izq[i]]
     p_fin = [xs_der[i], ys_der[i], zs_der[i]]
     dx = p_fin[0] - p_ini[0]
     dy = p_fin[1] - p_ini[1]
     dz = p_fin[2] - p_ini[2]
-    factory.addCylinder(p_ini[0], p_ini[1], p_ini[2], dx, dy, dz, radio)
+    factory.addCylinder(p_ini[0], p_ini[1], p_ini[2], dx  , dy  , dz , Constants.radio)
 
 
 
 
 ## MOSTRAR ## 
-# defineMeshSizes(2)
+#defineMeshSizes(2)
 gmsh.model.mesh.generate(3)
 gmsh.write("FinRay.vtk")
 gmsh.model.mesh.clear()

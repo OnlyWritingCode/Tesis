@@ -19,7 +19,6 @@ NRowsTactile = 10
 NColsTactile = 4
 
 
-GrillaHorizontal = 15 
-haciarriba = 1
-haciafuera = 1
-radio = 1
+GrillaHorizontal = 35
+GrillaVertical = 15
+radio = 0.5
