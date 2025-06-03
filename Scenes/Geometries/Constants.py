@@ -20,5 +20,6 @@ NColsTactile = 4
 
 
 GrillaHorizontal = 15 
-
-AnchoBarraGrilla = 1
+haciarriba = 1
+haciafuera = 1
+radio = 1
