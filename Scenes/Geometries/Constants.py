@@ -19,6 +19,6 @@ NRowsTactile = 10
 NColsTactile = 4
 
 
-GrillaHorizontal = 35
 GrillaVertical = 15
+GrillaHorizontal = 4
 radio = 0.5
