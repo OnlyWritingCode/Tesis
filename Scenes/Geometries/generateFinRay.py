@@ -51,7 +51,7 @@ point_tag_soporte = [P1,soporte1,soporte2,soporte3,soporte4,soporte5,soporte6,so
 
 ############################### GRILLA (Vertical) ##############################
 # Calculamos el espaciamiento en Z con la cantidad de líneas verticales
-longitud_disponible_z = Constants.Depth - 2 * Constants.sangria_grilla
+longitud_disponible_z = Constants.Depth - 2 * Constants.sangria_grilla 
 
 if Constants.cantidad_grilla_vertical > 1:
     separacion_grilla_vertical = longitud_disponible_z / (Constants.cantidad_grilla_vertical - 1)
@@ -61,22 +61,22 @@ else:
 cilindros_grilla = []
 
 for i in range(Constants.cantidad_grilla_vertical):
-    z_pos = Constants.sangria_grilla + i * separacion_grilla_vertical
+    z_pos = Constants.sangria_grilla + i * separacion_grilla_vertical + 3
     if z_pos > Constants.Depth - Constants.sangria_grilla:
         break  # Evitar pasar el límite superior
 
     # Coordenadas fijas en X y Y (valores negativos en X)
     x_inferior = -Constants.GripperWidth
     y_inferior = 0
-    x_superior = -Constants.WallThickness
-    y_superior = Constants.GripperHeight + Constants.GripperHeightGift
+    x_superior = -Constants.WallThickness 
+    y_superior = Constants.GripperHeight + Constants.GripperHeightGift 
 
     # Coordenadas del punto inicial y final (en la cara inclinada)
-    x0 = x_inferior
+    x0 = x_inferior 
     y0 = y_inferior
     z0 = z_pos
 
-    x1 = x_superior
+    x1 = x_superior 
     y1 = y_superior
     z1 = z_pos
 
@@ -122,7 +122,7 @@ longitud_util_y = y_fin - y_inicio
 if dy_objetivo > 0 and longitud_util_y > 0:
     # Número de líneas horizontales que caben
     # (+1 para incluir la línea de inicio; aunque puedes ajustar según necesites)
-    num_lineas_horizontales = int(longitud_util_y // dy_objetivo) + 1
+    num_lineas_horizontales = int(longitud_util_y // dy_objetivo) - 9
 else:
     # Si por algún motivo no hay espacio o la separación es inválida,
     # forzamos al menos 1 línea o 0 según lo requieras
@@ -134,7 +134,8 @@ offset_x = -1
 # Vamos colocando cada línea "horizontal"
 for i in range(num_lineas_horizontales):
     # Coordenada Y donde irá la línea
-    y_actual = y_inicio + i*dy_objetivo
+    y_actual = y_inicio + i*dy_objetivo 
+
     
     # Revisamos que no rebase el límite superior
     if y_actual > y_fin:
@@ -320,59 +321,59 @@ factory.synchronize()
 
 ############################### BASE DE GARRA ##############################
 
-# Definir los parámetros de las alas
-wing_extension = 10  # Extensión lateral de las alas en milímetros (ajusta según necesites)
-wing_height = 1      # Altura de las alas en milímetros (desde la parte inferior de la base)
+# # Definir los parámetros de las alas
+# wing_extension = 10  # Extensión lateral de las alas en milímetros (ajusta según necesites)
+# wing_height = 1      # Altura de las alas en milímetros (desde la parte inferior de la base)
 
-# Crear los puntos de la base original
-base0 = factory.addPoint(Constants.GripperWidth + Constants.base_extra, 0, 0)
-base1 = factory.addPoint(Constants.GripperWidth + Constants.base_extra, -10 - Constants.abajo_base_extra, 0)
-base2 = factory.addPoint(-Constants.GripperWidth - Constants.base_extra, -10 - Constants.abajo_base_extra, 0)
-base3 = factory.addPoint(-Constants.GripperWidth - Constants.base_extra, 0, 0)
+# # Crear los puntos de la base original
+# base0 = factory.addPoint(Constants.GripperWidth + Constants.base_extra, 0, 0)
+# base1 = factory.addPoint(Constants.GripperWidth + Constants.base_extra, -10 - Constants.abajo_base_extra, 0)
+# base2 = factory.addPoint(-Constants.GripperWidth - Constants.base_extra, -10 - Constants.abajo_base_extra, 0)
+# base3 = factory.addPoint(-Constants.GripperWidth - Constants.base_extra, 0, 0)
 
-point_tag_base = [base0, base1, base2, base3]
+# point_tag_base = [base0, base1, base2, base3]
 
-# Crear las líneas y la superficie de la base
-Line_tags_base = addLines(point_tag_base)
-WireTag_base = factory.addWire(Line_tags_base)
-SurfaceDimTag_base = (2, factory.addPlaneSurface([WireTag_base]))
+# # Crear las líneas y la superficie de la base
+# Line_tags_base = addLines(point_tag_base)
+# WireTag_base = factory.addWire(Line_tags_base)
+# SurfaceDimTag_base = (2, factory.addPlaneSurface([WireTag_base]))
 
-# Extruir la base
-ExtrudeOut_base = factory.extrude([SurfaceDimTag_base], 0, 0, (Constants.Depth + Constants.borde) * 2)
-dimtag_base = ExtrudeOut_base[1]
+# # Extruir la base
+# ExtrudeOut_base = factory.extrude([SurfaceDimTag_base], 0, 0, (Constants.Depth + Constants.borde) * 2)
+# dimtag_base = ExtrudeOut_base[1]
 
-# Sincronizar después de extruir la base
-factory.synchronize()
+# # Sincronizar después de extruir la base
+# factory.synchronize()
 
-# Crear las alas como cajas y fusionarlas con la base
+# # Crear las alas como cajas y fusionarlas con la base
 
-# Coordenadas comunes
-y0_wing = -10 - Constants.abajo_base_extra
-z0_wing = 0
-dx_wing = wing_extension
-dy_wing = wing_height
-dz_wing = (Constants.Depth + Constants.borde) * 2
+# # Coordenadas comunes
+# y0_wing = -10 - Constants.abajo_base_extra
+# z0_wing = 0
+# dx_wing = wing_extension
+# dy_wing = wing_height
+# dz_wing = (Constants.Depth + Constants.borde) * 2
 
-# Ala derecha
-x0_right_wing = Constants.GripperWidth + Constants.base_extra
-right_wing = factory.addBox(x0_right_wing, y0_wing, z0_wing, dx_wing, dy_wing, dz_wing)
+# # Ala derecha
+# x0_right_wing = Constants.GripperWidth + Constants.base_extra
+# right_wing = factory.addBox(x0_right_wing, y0_wing, z0_wing, dx_wing, dy_wing, dz_wing)
 
-# Ala izquierda
-x0_left_wing = -Constants.GripperWidth - Constants.base_extra - wing_extension
-left_wing = factory.addBox(x0_left_wing, y0_wing, z0_wing, dx_wing, dy_wing, dz_wing)
+# # Ala izquierda
+# x0_left_wing = -Constants.GripperWidth - Constants.base_extra - wing_extension
+# left_wing = factory.addBox(x0_left_wing, y0_wing, z0_wing, dx_wing, dy_wing, dz_wing)
 
-# Sincronizar después de crear las alas
-factory.synchronize()
+# # Sincronizar después de crear las alas
+# factory.synchronize()
 
-# Fusionar la base con el ala derecha
-fuse_result_base_right_wing = factory.fuse([dimtag_base], [(3, right_wing)])
-base_with_right_wing = fuse_result_base_right_wing[0]
-factory.synchronize()
+# # Fusionar la base con el ala derecha
+# fuse_result_base_right_wing = factory.fuse([dimtag_base], [(3, right_wing)])
+# base_with_right_wing = fuse_result_base_right_wing[0]
+# factory.synchronize()
 
-# Fusionar el resultado anterior con el ala izquierda
-fuse_result_base_wings = factory.fuse(base_with_right_wing, [(3, left_wing)])
-base_with_wings = fuse_result_base_wings[0]
-factory.synchronize()
+# # Fusionar el resultado anterior con el ala izquierda
+# fuse_result_base_wings = factory.fuse(base_with_right_wing, [(3, left_wing)])
+# base_with_wings = fuse_result_base_wings[0]
+# factory.synchronize()
 
 # ############################### CORTE DE LA BASE ##############################
 
