@@ -21,8 +21,9 @@ NColsTactile = 6
 sangria_grilla = 0 #margen desde los bordes en el eje Z (mm)
 cantidad_grilla_vertical = 5  # Número deseado de líneas verticales
 
-sangria_grilla_horizontal = 6 
-cantidad_grilla_horizontal = 1  # Número deseado de líneas horizontales
+cantidad_grilla_horizontal = 21
+sangria_grilla_horizontal = 4  # o algún margen mínimo si quieres bordes libres
+
 
 
 radio_cilindro_grilla = 0.5  # Radio de los cilindros (mm)
