@@ -50,51 +50,35 @@ point_tag_soporte = [P1,soporte1,soporte2,soporte3,soporte4,soporte5,soporte6,so
 ############################### Soporte ##############################
 
 ############################### GRILLA (Vertical) ##############################
-# Calculamos el espaciamiento en Z con la cantidad de líneas verticales
-longitud_disponible_z = Constants.Depth - 2 * Constants.sangria_grilla 
+# # 7 columnas interiores, centradas, evitando bordes y el plano de unión
+# n_cols = Constants.cantidad_grilla_vertical  # pon 7 en Constants
 
-if Constants.cantidad_grilla_vertical > 1:
-    separacion_grilla_vertical = longitud_disponible_z / (Constants.cantidad_grilla_vertical - 1)
-else:
-    separacion_grilla_vertical = longitud_disponible_z
+# z_min = Constants.sangria_grilla
+# z_max = Constants.Depth - Constants.sangria_grilla
 
-cilindros_grilla = []
+# # Margen para no caer justo en z=0 / z=Depth (evita “doble” columna visual)
+# eps = max(1e-3, 0.5 * Constants.radio_cilindro_grilla)
 
-for i in range(Constants.cantidad_grilla_vertical):
-    z_pos = Constants.sangria_grilla + i * separacion_grilla_vertical + 3
-    if z_pos > Constants.Depth - Constants.sangria_grilla:
-        break  # Evitar pasar el límite superior
+# # Posiciones estrictamente interiores (quita ambos extremos)
+# z_positions = np.linspace(z_min, z_max, n_cols + 2)[1:-1]
 
-    # Coordenadas fijas en X y Y (valores negativos en X)
-    x_inferior = -Constants.GripperWidth
-    y_inferior = 0
-    x_superior = -Constants.WallThickness 
-    y_superior = Constants.GripperHeight + Constants.GripperHeightGift 
+# # Empuja un pelín hacia el interior por seguridad numérica
+# z_positions = [max(z_min + eps, min(z_max - eps, z)) for z in z_positions]
 
-    # Coordenadas del punto inicial y final (en la cara inclinada)
-    x0 = x_inferior 
-    y0 = y_inferior
-    z0 = z_pos
+# cilindros_grilla = []  # (re)iniciamos la lista de herramientas de corte
 
-    x1 = x_superior 
-    y1 = y_superior
-    z1 = z_pos
+# for z_pos in z_positions:
+#     x0, y0 = -Constants.GripperWidth, 0
+#     x1, y1 = -Constants.WallThickness, Constants.GripperHeight + Constants.GripperHeightGift
+#     dx, dy, dz = (x1 - x0), (y1 - y0), 0.0
 
-    # Vector dirección del cilindro
-    dx = x1 - x0
-    dy = y1 - y0
-    dz = z1 - z0
+#     tag = factory.addCylinder(x0, y0, z_pos, dx, dy, dz, Constants.radio_cilindro_grilla)
+#     cilindros_grilla.append((3, tag))
 
-    # Crear el cilindro
-    cilindro = factory.addCylinder(
-        x0, y0, z0,      # Origen del cilindro
-        dx, dy, dz,      # Vector dirección
-        Constants.radio_cilindro_grilla  # Radio del cilindro
-    )
-    cilindros_grilla.append((3, cilindro))
-
-factory.synchronize()
+# factory.synchronize()
 ############################### GRILLA (Vertical) ##############################
+
+cilindros_grilla = []  # <-- inicializa lista para las HORIZONTALES
 
 ############################### GRILLA HORIZONTAL ##############################
 # Genera exactamente la cantidad de líneas horizontales definidas en Constants, 
@@ -293,6 +277,75 @@ full_gripper = fuse_full_gripper[0]  # Entidades agregadas (resultado de la fusi
 
 # Sincronizar después de la fusión
 factory.synchronize()
+
+# ===================== CORTE VERTICAL (7 en total con solape central) =====================
+# Objetivo: 4 líneas en cada cara, con las 2 más internas casi superpuestas en el plano medio,
+# para que visualmente se vea como 1 (total = 7).
+
+n_cols_total = Constants.cantidad_grilla_vertical  # déjalo en 7 en Constants
+outer_margin_vert = 0.4    # margen respecto a los extremos visibles
+eps = max(1e-3, 0.5 * Constants.radio_cilindro_grilla)
+
+# Separación microscópica entre las dos del centro (asegura robustez de las booleanas)
+center_gap = 0.001  # mm (si quieres aún más “pegadas”, baja a 0.002)
+
+# Geometría en Z del gripper ya espejado:
+mid = Constants.Depth + Constants.borde                      # plano medio
+z_min_total = 0.0
+z_max_total = 2 * (Constants.Depth + Constants.borde)
+
+# Intervalos útiles por cara:
+#   Cara frontal  : [zF0, zF1] termina justo antes del plano medio
+#   Cara posterior: [zB0, zB1] empieza justo después del plano medio
+zF0 = z_min_total + outer_margin_vert + eps
+zF1 = mid - (center_gap * 0.5) - eps
+
+zB0 = mid + (center_gap * 0.5) + eps
+zB1 = z_max_total - outer_margin_vert - eps
+
+# 4 posiciones equiespaciadas por cara (la más interna de cada cara queda junto al plano medio)
+n_each = 4
+def linspace_inclusive(a, b, n):
+    if n <= 1:
+        return [(a + b) / 2.0]
+    step = (b - a) / (n - 1)
+    return [a + i * step for i in range(n)]
+
+z_front = linspace_inclusive(zF0, zF1, n_each)
+z_back  = linspace_inclusive(zB0, zB1, n_each)
+
+# Construcción de las herramientas de corte (cilindros a través de la pared inclinada)
+tools_vertical = []
+def add_z_cyl(z_pos):
+    x0, y0 = -Constants.GripperWidth, 0
+    x1, y1 = -Constants.WallThickness, Constants.GripperHeight + Constants.GripperHeightGift
+    dx, dy, dz_vec = (x1 - x0), (y1 - y0), 0.0
+    tag = factory.addCylinder(x0, y0, z_pos, dx, dy, dz_vec, Constants.radio_cilindro_grilla)
+    tools_vertical.append((3, tag))
+
+for z in z_front:
+    add_z_cyl(z)
+for z in z_back:
+    add_z_cyl(z)
+
+factory.synchronize()
+
+# Corte del gripper completo ya duplicado (deja 7 “visibles” en total)
+cut_res_vert = factory.cut(full_gripper, tools_vertical)
+if cut_res_vert[0]:
+    full_gripper = cut_res_vert[0]
+factory.synchronize()
+# =================== FIN CORTE VERTICAL (7 total) ======================
+
+
+
+
+
+
+
+
+
+
 
 ############################### BASE DE GARRA ##############################
 
