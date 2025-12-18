@@ -10,7 +10,6 @@ PathGmshGeometries = os.path.dirname(os.path.abspath(__file__))+'/../Geometries/
 
 
 
-#Guardar datos del sensor magnetico
 
 
 
@@ -62,40 +61,8 @@ class Controller(Sofa.Core.Controller):
         self.mapCapCoordinatesTo3DCoords()
         
         self.CableEffector.desiredLength.value = self.CableEffector.cableInitialLength.value * self.DesiredLengthPercentage
-        # MlxTxt = ThisPath+'MlxInfo.txt'
-        
-        # MlxInfo = np.loadtxt(MlxTxt)
-        
-        # print(f"MlxInfo:{MlxInfo}")
-        
-        
-        
-        
-        
-        
-        # datos_lista = []
-            	
-        # try: 
-        #     datos_lista = np.loadtxt(nombre_archivo) * 2.5
-        # except:
-        #     print("error leyendo los datos desde archivo")
-        
-        # print(datos_lista)
-        # # with open(nombre_archivo, 'r') as archivo:
-        # # # Leer todas las líneas del archivo
-        # #     lineas = archivo.readlines()
-        # #     # Iterar sobre cada línea
-        # #     for linea in lineas:
-        # #         valores = linea.strip().split(',')
-        # #         datos_lista.extend(valores)
-        # print("Datos leídos del archivo:", datos_lista)
 
-	    
-        #self.SurfacePressureConstraint1.value.value = [float(datos_lista[2])]
-        #self.SurfacePressureConstraint2.value.value = [float(datos_lista[0])]
-        #self.SurfacePressureConstraint3.value.value = [float(datos_lista[1])]
 
-    
     def onKeypressedEvent(self, c):
         pass
         key = c['key']
@@ -128,7 +95,8 @@ class Controller(Sofa.Core.Controller):
 
 def createScene(rootNode):
         		 
-                rootNode.addObject('RequiredPlugin', pluginName='SoftRobots SofaOpenglVisual SofaSparseSolver SofaPreconditioner SoftRobots.Inverse')
+                rootNode.addObject('RequiredPlugin', 
+                                   pluginName='SofaPython3 SoftRobots SoftRobots.Inverse Sofa.Component Sofa.GL.Component')
                 rootNode.addObject('BackgroundSetting', color='0 0 0')
                 rootNode.addObject('VisualStyle', displayFlags='showVisualModels showBehaviorModels showCollisionModels hideBoundingCollisionModels hideForceFields showInteractionForceFields hideWireframe')
                 rootNode.addObject('InteractiveCamera', name='c', orientation=[0.227029, -0.140615, -0.670453, 0.692227], position=[-139.753, -65.7326, 201.098], distance=354.42) #InteractiveCamera
@@ -140,7 +108,7 @@ def createScene(rootNode):
 
                 FinRay = rootNode.addChild('FinRay')
                 
-                FinRay.addObject('EulerImplicit', name='odesolver')#,rayleighStiffness=0.01)                
+                FinRay.addObject('EulerImplicitSolver', name='odesolver')#,rayleighStiffness=0.01)                
                 FinRay.addObject('SparseLDLSolver', template="CompressedRowSparseMatrixMat3x3d")                      
                 FinRay.addObject('MeshVTKLoader', name='loader', filename=path+'FinRay.vtk')                                
                 FinRay.addObject('TetrahedronSetTopologyContainer', src='@loader', name='container')

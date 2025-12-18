@@ -162,7 +162,8 @@ class Controller(Sofa.Core.Controller):
 
 def createScene(rootNode):
         		 
-                rootNode.addObject('RequiredPlugin', pluginName='SoftRobots SofaOpenglVisual SofaSparseSolver SofaPreconditioner SoftRobots.Inverse')
+                rootNode.addObject('RequiredPlugin', 
+                                   pluginName='SofaPython3 SoftRobots SoftRobots.Inverse Sofa.Component Sofa.GL.Component')
                 rootNode.addObject('BackgroundSetting', color='0 0 0')
                 rootNode.addObject('VisualStyle', displayFlags='showVisualModels showBehaviorModels showCollisionModels hideBoundingCollisionModels hideForceFields showInteractionForceFields hideWireframe')
                 rootNode.addObject('InteractiveCamera', name='c', orientation=[0.227029, -0.140615, -0.670453, 0.692227], position=[-139.753, -65.7326, 201.098], distance=354.42) #InteractiveCamera
@@ -174,7 +175,7 @@ def createScene(rootNode):
 
                 FinRay = rootNode.addChild('FinRay')
                 
-                FinRay.addObject('EulerImplicit', name='odesolver')#,rayleighStiffness=0.01)                
+                FinRay.addObject('EulerImplicitSolver', name='odesolver')#,rayleighStiffness=0.01)                
                 FinRay.addObject('SparseLDLSolver', template="CompressedRowSparseMatrixMat3x3d")                      
                 FinRay.addObject('MeshVTKLoader', name='loader', filename=path+'FinRay.vtk')                                
                 FinRay.addObject('TetrahedronSetTopologyContainer', src='@loader', name='container')

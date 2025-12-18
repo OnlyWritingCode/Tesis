@@ -5,7 +5,7 @@ path = os.path.dirname(os.path.abspath(__file__))+'/mesh/'
 
 def createScene(rootNode):
 
-                rootNode.addObject('RequiredPlugin', pluginName='SoftRobots SofaOpenglVisual SofaSparseSolver SofaPreconditioner')
+                rootNode.addObject('RequiredPlugin', pluginName='SofaCUDA Sofa.Component Sofa.GL.Component')
                 rootNode.addObject('VisualStyle', displayFlags='showVisualModels hideBehaviorModels showCollisionModels hideBoundingCollisionModels showForceFields showInteractionForceFields hideWireframe')
 
                 rootNode.addObject('FreeMotionAnimationLoop')
@@ -22,7 +22,7 @@ def createScene(rootNode):
 
                 model.addObject('MechanicalObject', name='tetras', template='Vec3', showIndices=False)
                 model.addObject('UniformMass', totalMass=0.5)
-                model.addObject('TetrahedronFEMForceField', template='Vec3', name='FEM', method='large', poissonRatio=0.3,  youngModulus=18000)
+                model.addObject('TetrahedronFEMForceField', template='Vec3', name='FEM', method='large', poissonRatio=0.3,  youngModulus=40*1000)
 
                 model.addObject('BoxROI', name='boxROI', box=[-50, -5, -30,  50, 2, 30], drawBoxes=True, position="@tetras.rest_position", tetrahedra="@container.tetrahedra")
                 model.addObject('RestShapeSpringsForceField', points='@boxROI.indices', stiffness=1e12)

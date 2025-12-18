@@ -1,0 +1,46 @@
+
+--- NEW SESSION: 17/12/2025 17:55:31 ---
+/completeMesh/ROIm.drawROI = 1
+
+--- NEW SESSION: 17/12/2025 17:57:05 ---
+/completeMesh/loader.scale3d = 2 2 2
+
+--- NEW SESSION: 18/12/2025 10:41:05 ---
+//LightManager.ambient = 0 0 0 1
+/model/ROIm.drawROI = 1
+/model/ROIm.drawPoints = 1
+
+--- NEW SESSION: 18/12/2025 11:22:47 ---
+/model/boxROI.drawPoints = 1
+
+--- NEW SESSION: 18/12/2025 14:31:26 ---
+/model/ROIm.drawROI = 0
+/model/ROIm.drawEdges = 0
+/model/ROIm.drawQuads = 1
+/model/ROIm.drawSize = 10
+/model/ROIm.drawROI = 0
+/model/ROIm.drawEdges = 0
+/model/ROIm.drawQuads = 1
+/model/ROIm.drawSize = 10
+/model/ROIm.drawROI = 0
+/model/ROIm.drawEdges = 0
+/model/ROIm.drawQuads = 1
+/model/ROIm.drawSize = 10
+/model/FEM.showStressColorMap = Red to Blue
+/model/FEM.showVonMisesStressPerNode = 0
+/model/FEM.drawHeterogeneousTetra = 1
+/model/FEM.showVonMisesStressPerNodeColorMap = 1
+/model/FEM.showVonMisesStressPerElement = 0
+/model/FEM.showElementGapScale = 0.5
+/model/FEM.showStressColorMap = Red to Blue
+/model/FEM.showVonMisesStressPerNode = 0
+/model/FEM.drawHeterogeneousTetra = 1
+/model/FEM.showVonMisesStressPerNodeColorMap = 1
+/model/FEM.showVonMisesStressPerElement = 0
+/model/FEM.showElementGapScale = 0.5
+/model/FEM.showStressColorMap = Red to Blue
+/model/FEM.showVonMisesStressPerNode = 0
+/model/FEM.drawHeterogeneousTetra = 1
+/model/FEM.showVonMisesStressPerNodeColorMap = 1
+/model/FEM.showVonMisesStressPerElement = 0
+/model/FEM.showElementGapScale = 0.5

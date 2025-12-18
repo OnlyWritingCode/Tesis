@@ -1,525 +1,240 @@
-############################### INICIO ##############################
 import gmsh
 import numpy as np
-import Constants
+from Constants import * # --- Inicialización ---
 gmsh.initialize()
 launchGUI = gmsh.fltk.run 
 factory = gmsh.model.occ
-############################### INICIO ##############################
 
-############################### CREAR LINEAS ##############################
+# --- Funciones Auxiliares ---
 def addLines(PointTags, Close=True):
     N = len(PointTags)
-    EndIdx = N
+    EndIdx = N if Close else N - 1
     LineTags = [] 
-    if Close is False:
-        EndIdx = EndIdx-1
     for i in range(EndIdx):
-        print(i)
         LineTags.append(factory.addLine(PointTags[i], PointTags[(i+1)%N]))
     return LineTags
-############################### CREAR LINEAS ##############################      
 
-############################### PAREDES ##############################     
-InnerGripperHeight = (Constants.GripperWidth-Constants.WallThickness)/np.cos(Constants.Theta)
-Phi = np.arctan2(Constants.GripperWidth-Constants.WallThickness,InnerGripperHeight)
+# --- 1. Definición de Geometría 2D (Puntos) ---
 
+# Cálculos auxiliares
+InnerGripperHeight = (GripperWidth - WallThickness) / np.cos(Theta)
+Phi = np.arctan2(GripperWidth - WallThickness, InnerGripperHeight)
 
-                        #(30-3= 27,0,0)
-P0 = factory.addPoint(Constants.GripperWidth-Constants.WallThickness, 0, 0)
-P1 = factory.addPoint(Constants.GripperWidth, 0, 0)
-P2= factory.addPoint(Constants.WallThickness, Constants.GripperHeight+Constants.GripperHeightGift,0)
-P3= factory.addPoint(0, Constants.GripperHeight+Constants.GripperHeightGift,0)
+# Puntos de la Pared (Gripper)
+P0 = factory.addPoint(GripperWidth - WallThickness, 0, 0)
+P1 = factory.addPoint(GripperWidth, 0, 0)
+P2 = factory.addPoint(WallThickness, GripperHeight + GripperHeightGift, 0)
+P3 = factory.addPoint(0, GripperHeight + GripperHeightGift, 0)
 P4 = factory.addPoint(0, InnerGripperHeight, 0)
-PointTags = [P0,P1,P2,P3,P4]
 
+PointTags = [P0, P1, P2, P3, P4]
 PointTags_exterior = PointTags.copy()
-############################### PAREDES ############################## 
 
-############################### Soporte ############################## 
-soporte1 = factory.addPoint(Constants.GripperWidth, -10, 0)
-soporte2 = factory.addPoint(Constants.GripperWidth-6, -10, 0)
-soporte3 = factory.addPoint(Constants.GripperWidth-6, -7, 0)
-soporte4 = factory.addPoint(Constants.GripperWidth-3, -7, 0)
-soporte5 = factory.addPoint(Constants.GripperWidth-3, -3, 0)
+# Puntos del Soporte (Base)
+soporte1 = factory.addPoint(GripperWidth, -10, 0)
+soporte2 = factory.addPoint(GripperWidth - 6, -10, 0)
+soporte3 = factory.addPoint(GripperWidth - 6, -7, 0)
+soporte4 = factory.addPoint(GripperWidth - 3, -7, 0)
+soporte5 = factory.addPoint(GripperWidth - 3, -3, 0)
 soporte6 = factory.addPoint(0, -3, 0)
 soporte7 = factory.addPoint(0, 0, 0)
 
-point_tag_soporte = [P1,soporte1,soporte2,soporte3,soporte4,soporte5,soporte6,soporte7,P0]
+point_tag_soporte = [P1, soporte1, soporte2, soporte3, soporte4, soporte5, soporte6, soporte7, P0]
 
-############################### Soporte ##############################
+# Puntos de Barras Internas
+BarPositions = np.linspace(0, InnerGripperHeight, NBars + 2)
 
-############################### GRILLA (Vertical) ##############################
-# # 7 columnas interiores, centradas, evitando bordes y el plano de unión
-# n_cols = Constants.cantidad_grilla_vertical  # pon 7 en Constants
+for BarPosition in BarPositions[1:-1]:
+    StepWidth = 0.1  
+    BarTotalLength = np.tan(Phi) * BarPosition
+    
+    # Coordenadas relativas
+    y_top = InnerGripperHeight - (BarPosition - BarHeightThin / 2)
+    y_bot = InnerGripperHeight - (BarPosition + BarHeightThin / 2)
+    y_thick_top = InnerGripperHeight - (BarPosition - BarHeightThick / 2)
+    y_thick_bot = InnerGripperHeight - (BarPosition + BarHeightThick / 2)
+    
+    BarTopLength = np.tan(Phi) * (BarPosition - BarHeightThin / 2)
+    BarBottomLength = np.tan(Phi) * (BarPosition + BarHeightThin / 2)
 
-# z_min = Constants.sangria_grilla
-# z_max = Constants.Depth - Constants.sangria_grilla
-
-# # Margen para no caer justo en z=0 / z=Depth (evita “doble” columna visual)
-# eps = max(1e-3, 0.5 * Constants.radio_cilindro_grilla)
-
-# # Posiciones estrictamente interiores (quita ambos extremos)
-# z_positions = np.linspace(z_min, z_max, n_cols + 2)[1:-1]
-
-# # Empuja un pelín hacia el interior por seguridad numérica
-# z_positions = [max(z_min + eps, min(z_max - eps, z)) for z in z_positions]
-
-# cilindros_grilla = []  # (re)iniciamos la lista de herramientas de corte
-
-# for z_pos in z_positions:
-#     x0, y0 = -Constants.GripperWidth, 0
-#     x1, y1 = -Constants.WallThickness, Constants.GripperHeight + Constants.GripperHeightGift
-#     dx, dy, dz = (x1 - x0), (y1 - y0), 0.0
-
-#     tag = factory.addCylinder(x0, y0, z_pos, dx, dy, dz, Constants.radio_cilindro_grilla)
-#     cilindros_grilla.append((3, tag))
-
-# factory.synchronize()
-############################### GRILLA (Vertical) ##############################
-
-cilindros_grilla = []  # <-- inicializa lista para las HORIZONTALES
-
-############################### GRILLA HORIZONTAL ##############################
-# Genera exactamente la cantidad de líneas horizontales definidas en Constants, 
-# distribuidas simétricamente y centradas en la pinza.
-
-cantidad_horiz = Constants.cantidad_grilla_horizontal  # <--- cantidad a usar (ej: 21)
-
-# Puntos de la pared inclinada en el lado izquierdo (coordenadas negativas)
-x1 = -Constants.GripperWidth
-y1 = 0
-z1 = 0
-
-x2 = -Constants.WallThickness
-y2 = Constants.GripperHeight + Constants.GripperHeightGift
-z2 = 0
-
-# Definir el rango útil en Y (inicio y fin)
-y_inicio = y1 + Constants.sangria_grilla_horizontal
-y_fin    = y2 - Constants.sangria_grilla_horizontal
-longitud_util_y = y_fin - y_inicio
-
-if cantidad_horiz > 1:
-    dy = longitud_util_y / (cantidad_horiz - 1)
-else:
-    dy = 0  # Si solo hay 1 línea, da lo mismo el espaciamiento
-
-for i in range(cantidad_horiz):
-    y_actual = y_inicio + i * dy
-
-    # Interpolación lineal para X correspondiente a este Y (siguiendo el borde)
-    t = (y_actual - y1) / (y2 - y1) if (y2 - y1) != 0 else 0
-    x_actual = x1 + t * (x2 - x1)
-
-    # Vector perpendicular al borde (para meter el cilindro justo en la mitad del espesor de la pared)
-    dx_line = (x2 - x1)
-    dy_line = (y2 - y1)
-    dx_perp = -dy_line
-    dy_perp =  dx_line
-    length_perp = np.sqrt(dx_perp**2 + dy_perp**2)
-    dx_perp_norm = dx_perp / length_perp
-    dy_perp_norm = dy_perp / length_perp
-
-    shift_amount = (Constants.WallThickness / 2) - (Constants.radio_cilindro_grilla / 2) - 0.4
-
-    x_final = x_actual - dx_perp_norm * shift_amount
-    y_final = y_actual - dy_perp_norm * shift_amount
-
-    # Definir cilindro a lo largo de Z
-    x0 = x_final
-    y0 = y_final
-    z0 = 0
-    dx_cil = 0
-    dy_cil = 0
-    dz_cil = Constants.Depth + Constants.borde
-
-    cilindro = factory.addCylinder(
-        x0, y0, z0,
-        dx_cil, dy_cil, dz_cil,
-        Constants.radio_cilindro_grilla
-    )
-    cilindros_grilla.append((3, cilindro))
+    if BarTotalLength < BarThinLength:
+        # Barra simple
+        pts = [
+            factory.addPoint(BarTopLength, y_top, 0),
+            factory.addPoint(0, y_top, 0),
+            factory.addPoint(0, y_bot, 0),
+            factory.addPoint(BarBottomLength, y_bot, 0)
+        ]
+        PointTags.extend(pts)
+    
+    else:
+        # Barra compleja (gruesa)
+        pts = [
+            factory.addPoint(BarTopLength, y_top, 0),
+            factory.addPoint(BarTopLength - BarThinLength, y_top, 0),
+            factory.addPoint(BarTopLength - BarThinLength - StepWidth, y_thick_top, 0),
+            factory.addPoint(0, y_thick_top, 0),
+            factory.addPoint(0, y_thick_bot, 0),
+            factory.addPoint(BarBottomLength - BarThinLength - StepWidth, y_thick_bot, 0),
+            factory.addPoint(BarBottomLength - BarThinLength, y_bot, 0),
+            factory.addPoint(BarBottomLength, y_bot, 0)
+        ]
+        PointTags.extend(pts)
 
 factory.synchronize()
-############################### GRILLA HORIZONTAL ##############################
 
+# --- 2. Creación de Superficies ---
 
+# Líneas y Wires
+WireTag = factory.addWire(addLines(PointTags))
+WireTag_soporte = factory.addWire(addLines(point_tag_soporte))
+WireTag_exterior = factory.addWire(addLines(PointTags_exterior))
 
-############################### BARRAS INTERNAS ############################## 
-BarPositions = np.linspace(0, InnerGripperHeight, Constants.NBars+2)
-for BarPosition in BarPositions[1:-1]:
-    print(f"BarPosition:{BarPosition}")
-    StepWidth = 0.1  
-    BarTotalLength = np.tan(Phi)*BarPosition
-    
-    BarTopLength = np.tan(Phi)*(BarPosition-Constants.BarHeightThin/2)
-    BarBottomLength = np.tan(Phi)*(BarPosition+Constants.BarHeightThin/2)  
-    if BarTotalLength < Constants.BarThinLength:
-        P0Bar = factory.addPoint(BarTopLength,InnerGripperHeight-(BarPosition-Constants.BarHeightThin/2),0)
-        P1Bar = factory.addPoint(0,InnerGripperHeight-(BarPosition-Constants.BarHeightThin/2),0)
-        P2Bar = factory.addPoint(0,InnerGripperHeight-(BarPosition+Constants.BarHeightThin/2),0)
-        P3Bar = factory.addPoint(BarBottomLength,InnerGripperHeight-(BarPosition+Constants.BarHeightThin/2),0)
-        
-        PointTags += [P0Bar, P1Bar, P2Bar,P3Bar]
-    
-    if BarTotalLength > Constants.BarThinLength:
-        P0Bar = factory.addPoint(BarTopLength,InnerGripperHeight-(BarPosition-Constants.BarHeightThin/2),0)
-        P1Bar = factory.addPoint(BarTopLength-Constants.BarThinLength,InnerGripperHeight-(BarPosition-Constants.BarHeightThin/2),0)
-        P2Bar = factory.addPoint(BarTopLength-Constants.BarThinLength-StepWidth,InnerGripperHeight-(BarPosition-Constants.BarHeightThick/2),0)        
-        P3Bar = factory.addPoint(0,InnerGripperHeight-(BarPosition-Constants.BarHeightThick/2),0)
-        P4Bar = factory.addPoint(0,InnerGripperHeight-(BarPosition+Constants.BarHeightThick/2),0)        
-        P5Bar = factory.addPoint(BarBottomLength-Constants.BarThinLength-StepWidth,InnerGripperHeight-(BarPosition+Constants.BarHeightThick/2),0)        
-        P6Bar = factory.addPoint(BarBottomLength-Constants.BarThinLength,InnerGripperHeight-(BarPosition+Constants.BarHeightThin/2),0)  
-        P7Bar = factory.addPoint(BarBottomLength,InnerGripperHeight-(BarPosition+Constants.BarHeightThin/2),0)      
-        PointTags += [P0Bar, P1Bar, P2Bar, P3Bar, P4Bar,P5Bar,P6Bar,P7Bar]
-############################### BARRAS INTERNAS ############################## 
+# Superficies planas
+SurfaceDimTag = (2, factory.addPlaneSurface([WireTag]))
+SurfaceDimTag_soporte = (2, factory.addPlaneSurface([WireTag_soporte]))
+SurfaceDimTag_exterior = (2, factory.addPlaneSurface([WireTag_exterior]))
 
-############################### LINEAS 2D Y SUP?############################## 
-LineTags = addLines(PointTags)
-LineTags_soporte = addLines(point_tag_soporte)
-Line_tags_exterior = addLines(PointTags_exterior)
+# --- 3. Extrusión a 3D ---
 
-WireTag = factory.addWire(LineTags)
-WireTag_soporte = factory.addWire(LineTags_soporte)
-WireTag_exterior = factory.addWire(Line_tags_exterior)
-
-SurfaceDimTag = (2,factory.addPlaneSurface([WireTag]))
-SurfaceDimTag_soporte = (2,factory.addPlaneSurface([WireTag_soporte]))
-SurfaceDimTag_exterior = (2,factory.addPlaneSurface([WireTag_exterior]))
-############################### LINEAS 2D Y SUP? ############################## 
-
-############################### LE DA SUPERFICIE ############################## 
-ExtrudeOut = factory.extrude([SurfaceDimTag], 0, 0, Constants.Depth)
-ExtrudeOut_soporte = factory.extrude([SurfaceDimTag_soporte], 0, 0, Constants.Depth+Constants.borde)
-ExtrudeOut_exterior = factory.extrude([SurfaceDimTag_exterior], 0, 0, Constants.Depth+Constants.borde)
+ExtrudeOut = factory.extrude([SurfaceDimTag], 0, 0, Depth)
+ExtrudeOut_soporte = factory.extrude([SurfaceDimTag_soporte], 0, 0, Depth + borde)
+ExtrudeOut_exterior = factory.extrude([SurfaceDimTag_exterior], 0, 0, Depth + borde)
 
 HalfDimTag = ExtrudeOut[1]
 HalfDimTag_soporte = ExtrudeOut_soporte[1]
 HalfDimTag_exterior = ExtrudeOut_exterior[1]
-############################### LE DA SUPERFICIE ############################## 
 
-############################### DUPLICA LA FIGURA ##############################
-# Copiar y simetrizar la garra
+# --- 4. Operaciones de Simetría y Fusión (Mitad) ---
+
+# Copiar y simetrizar (Eje X)
 CopyDimTags = factory.copy([HalfDimTag])
-factory.synchronize()  # Sincronizar antes de simetrizar
-factory.symmetrize(CopyDimTags, 1, 0, 0, 0)
-
-# Copiar y simetrizar el soporte
 CopyDimTags_soporte = factory.copy([HalfDimTag_soporte])
-factory.synchronize()  # Sincronizar antes de simetrizar
-factory.symmetrize(CopyDimTags_soporte, 1, 0, 0, 0)
+CopyDimTags_exterior = factory.copy([HalfDimTag_exterior])
 
-# Copiar y simetrizar el exterior
-CopyDimTags_exterior= factory.copy([HalfDimTag_exterior])
-factory.synchronize()  # Sincronizar antes de simetrizar
+factory.synchronize()
+factory.symmetrize(CopyDimTags, 1, 0, 0, 0)
+factory.symmetrize(CopyDimTags_soporte, 1, 0, 0, 0)
 factory.symmetrize(CopyDimTags_exterior, 1, 0, 0, 0)
 
+# Fusión de mitades
+garra_final = factory.fuse(CopyDimTags, [HalfDimTag])[0]
+soporte_final = factory.fuse(CopyDimTags_soporte, [HalfDimTag_soporte])[0]
+exterior_final = factory.fuse(CopyDimTags_exterior, [HalfDimTag_exterior])[0]
 
-# Realizar la fusión de la garra
-fuse_result_garra = factory.fuse(CopyDimTags, [HalfDimTag])
-garra_final = fuse_result_garra[0]  # Entidades agregadas de la garra
-
-# Realizar la fusión del soporte
-fuse_result_soporte = factory.fuse(CopyDimTags_soporte, [HalfDimTag_soporte])
-soporte_final = fuse_result_soporte[0]  # Entidades agregadas del soporte
-
-fuse_result_exterior = factory.fuse(CopyDimTags_exterior, [HalfDimTag_exterior])
-exterior_final =  fuse_result_exterior[0]
-
-# Fusionar garra y soporte en una sola entidad final
-fuse_result_total = factory.fuse(garra_final, soporte_final)
-garra_soporte_final = fuse_result_total[0]  # Entidades agregadas de la fusión total
-
-fuse_total = factory.fuse(garra_soporte_final,exterior_final)
-total_final = fuse_total[0]
-
-
-
-# Imprimir para verificar
-print("Garra Final después de la fusión:", total_final)
-
-# Sincronizar después de la fusión total
-factory.synchronize()
-############################### DUPLICA LA FIGURA ##############################
-
-############################### OPERACIÓN DE CORTE ##############################
-# Definir las entidades a cortar y las herramientas de corte
-objects_to_cut = total_final  # Lista de entidades a cortar
-cutting_tools = cilindros_grilla  # Lista de cilindros que harán el corte (lista de tuplas (dim, tag))
-
-# Verificar los datos antes de realizar la operación de corte
-print("Entidades a cortar (objects_to_cut):", objects_to_cut)
-print("Herramientas de corte (cutting_tools):", cutting_tools)
-
-# Realizar la operación de corte
-cut_result = factory.cut(objects_to_cut, cutting_tools)
-added_cut = cut_result[0]  # Entidades agregadas (resultado del corte)
-removed_cut = cut_result[1]  # Entidades removidas durante el corte
-
-# Verificar y asignar
-if added_cut:
-    HalfDimTag = added_cut[0]  # Asignar el volumen resultante del corte
-    print("Garra cortada:", HalfDimTag)
-else:
-    print("Error: No se crearon entidades durante el corte.")
-############################### OPERACIÓN DE CORTE ##############################
-
-
-# Copiar y simetrizar el exterior
-CopyDimTags_finaltotal= factory.copy([HalfDimTag])
-factory.synchronize()  # Sincronizar antes de simetrizar
-factory.symmetrize(CopyDimTags_finaltotal, 0, 0, -1, Constants.Depth+Constants.borde)
-
-# Fusionar las dos mitades de la garra para obtener la garra completa
-fuse_full_gripper = factory.fuse([HalfDimTag], CopyDimTags_finaltotal)
-full_gripper = fuse_full_gripper[0]  # Entidades agregadas (resultado de la fusión)
-
-# Sincronizar después de la fusión
-factory.synchronize()
-
-# ===================== CORTE VERTICAL (7 en total con solape central) =====================
-# Objetivo: 4 líneas en cada cara, con las 2 más internas casi superpuestas en el plano medio,
-# para que visualmente se vea como 1 (total = 7).
-
-n_cols_total = Constants.cantidad_grilla_vertical  # déjalo en 7 en Constants
-outer_margin_vert = 0.4    # margen respecto a los extremos visibles
-eps = max(1e-3, 0.5 * Constants.radio_cilindro_grilla)
-
-# Separación microscópica entre las dos del centro (asegura robustez de las booleanas)
-center_gap = 0.001  # mm (si quieres aún más “pegadas”, baja a 0.002)
-
-# Geometría en Z del gripper ya espejado:
-mid = Constants.Depth + Constants.borde                      # plano medio
-z_min_total = 0.0
-z_max_total = 2 * (Constants.Depth + Constants.borde)
-
-# Intervalos útiles por cara:
-#   Cara frontal  : [zF0, zF1] termina justo antes del plano medio
-#   Cara posterior: [zB0, zB1] empieza justo después del plano medio
-zF0 = z_min_total + outer_margin_vert + eps
-zF1 = mid - (center_gap * 0.5) - eps
-
-zB0 = mid + (center_gap * 0.5) + eps
-zB1 = z_max_total - outer_margin_vert - eps
-
-# 4 posiciones equiespaciadas por cara (la más interna de cada cara queda junto al plano medio)
-n_each = 4
-def linspace_inclusive(a, b, n):
-    if n <= 1:
-        return [(a + b) / 2.0]
-    step = (b - a) / (n - 1)
-    return [a + i * step for i in range(n)]
-
-z_front = linspace_inclusive(zF0, zF1, n_each)
-z_back  = linspace_inclusive(zB0, zB1, n_each)
-
-# Construcción de las herramientas de corte (cilindros a través de la pared inclinada)
-tools_vertical = []
-def add_z_cyl(z_pos):
-    x0, y0 = -Constants.GripperWidth, 0
-    x1, y1 = -Constants.WallThickness, Constants.GripperHeight + Constants.GripperHeightGift
-    dx, dy, dz_vec = (x1 - x0), (y1 - y0), 0.0
-    tag = factory.addCylinder(x0, y0, z_pos, dx, dy, dz_vec, Constants.radio_cilindro_grilla)
-    tools_vertical.append((3, tag))
-
-for z in z_front:
-    add_z_cyl(z)
-for z in z_back:
-    add_z_cyl(z)
+# Fusión total de componentes
+garra_soporte_final = factory.fuse(garra_final, soporte_final)[0]
+total_final = factory.fuse(garra_soporte_final, exterior_final)[0]
 
 factory.synchronize()
 
-# Corte del gripper completo ya duplicado (deja 7 “visibles” en total)
-cut_res_vert = factory.cut(full_gripper, tools_vertical)
-if cut_res_vert[0]:
-    full_gripper = cut_res_vert[0]
+# --- 5. Operaciones de Simetría (Garra Completa - Eje Z) ---
+
+# Asegurar formato (dim, tag)
+final_entity = total_final[0] if isinstance(total_final, list) else total_final
+
+# Simetría final para grosor completo
+CopyDimTags_finaltotal = factory.copy([final_entity])
 factory.synchronize()
-# =================== FIN CORTE VERTICAL (7 total) ======================
+factory.symmetrize(CopyDimTags_finaltotal, 0, 0, -1, Depth + borde)
 
+# Fusión final
+fuse_full_gripper = factory.fuse([final_entity], CopyDimTags_finaltotal)
+full_gripper = fuse_full_gripper[0]
 
-
-
-
-
-
-
-
-
-
-############################### BASE DE GARRA ##############################
-
-# # Definir los parámetros de las alas
-# wing_extension = 10  # Extensión lateral de las alas en milímetros (ajusta según necesites)
-# wing_height = 1      # Altura de las alas en milímetros (desde la parte inferior de la base)
-
-# # Crear los puntos de la base original
-# base0 = factory.addPoint(Constants.GripperWidth + Constants.base_extra, 0, 0)
-# base1 = factory.addPoint(Constants.GripperWidth + Constants.base_extra, -10 - Constants.abajo_base_extra, 0)
-# base2 = factory.addPoint(-Constants.GripperWidth - Constants.base_extra, -10 - Constants.abajo_base_extra, 0)
-# base3 = factory.addPoint(-Constants.GripperWidth - Constants.base_extra, 0, 0)
-
-# point_tag_base = [base0, base1, base2, base3]
-
-# # Crear las líneas y la superficie de la base
-# Line_tags_base = addLines(point_tag_base)
-# WireTag_base = factory.addWire(Line_tags_base)
-# SurfaceDimTag_base = (2, factory.addPlaneSurface([WireTag_base]))
-
-# # Extruir la base
-# ExtrudeOut_base = factory.extrude([SurfaceDimTag_base], 0, 0, (Constants.Depth + Constants.borde) * 2)
-# dimtag_base = ExtrudeOut_base[1]
-
-# # Sincronizar después de extruir la base
-# factory.synchronize()
-
-# # Crear las alas como cajas y fusionarlas con la base
-
-# # Coordenadas comunes
-# y0_wing = -10 - Constants.abajo_base_extra
-# z0_wing = 0
-# dx_wing = wing_extension
-# dy_wing = wing_height
-# dz_wing = (Constants.Depth + Constants.borde) * 2
-
-# # Ala derecha
-# x0_right_wing = Constants.GripperWidth + Constants.base_extra
-# right_wing = factory.addBox(x0_right_wing, y0_wing, z0_wing, dx_wing, dy_wing, dz_wing)
-
-# # Ala izquierda
-# x0_left_wing = -Constants.GripperWidth - Constants.base_extra - wing_extension
-# left_wing = factory.addBox(x0_left_wing, y0_wing, z0_wing, dx_wing, dy_wing, dz_wing)
-
-# # Sincronizar después de crear las alas
-# factory.synchronize()
-
-# # Fusionar la base con el ala derecha
-# fuse_result_base_right_wing = factory.fuse([dimtag_base], [(3, right_wing)])
-# base_with_right_wing = fuse_result_base_right_wing[0]
-# factory.synchronize()
-
-# # Fusionar el resultado anterior con el ala izquierda
-# fuse_result_base_wings = factory.fuse(base_with_right_wing, [(3, left_wing)])
-# base_with_wings = fuse_result_base_wings[0]
-# factory.synchronize()
-
-# ############################### CORTE DE LA BASE ##############################
-
-# # Realizar el corte: base con alas - garra completa
-# cut_result_base = factory.cut(base_with_wings, full_gripper)
-
-# # Obtener el volumen resultante después del corte
-# if cut_result_base[0]:
-#     base_con_hueco = cut_result_base[0]
-#     print("Base con alas después del corte:", base_con_hueco)
-# else:
-#     print("Error: No se creó ninguna entidad durante el corte de la base.")
-
-# # Sincronizar después del corte
-# factory.synchronize()
-
-# ############################### CORTE DE LA BASE ##############################
-
-
-
-
-############################### CILINDRO EN EL CENTRO ##############################
-
-from math import sqrt
-
-# Punto de inicio original del cilindro (en la pared izquierda)
-x0_original = -Constants.GripperWidth + Constants.WallThickness  # Justo dentro de la pared izquierda
-y0_original = Constants.GripperHeight / 2  # Altura central en Y
-z0_original = Constants.Depth + Constants.borde  # Centro en Z después de la simetría
-
-# Punto final original del cilindro (en la pared derecha)
-x1_original = Constants.GripperWidth - Constants.WallThickness  # Justo dentro de la pared derecha
-y1_original = y0_original - 50  # Inclinación hacia abajo (ajusta según necesites)
-z1_original = z0_original  # Misma posición en Z
-
-# Calcular el punto central del cilindro
-x_centro = (x0_original + x1_original) / 2
-y_centro = (y0_original + y1_original) / 2
-z_centro = (z0_original + z1_original) / 2
-
-# Calcular el vector dirección original
-dx_original = x1_original - x0_original
-dy_original = y1_original - y0_original
-dz_original = z1_original - z0_original
-
-# Calcular la longitud original del cilindro
-longitud_original = sqrt(dx_original**2 + dy_original**2 + dz_original**2)
-
-# Vector dirección unitario
-ux = dx_original / longitud_original
-uy = dy_original / longitud_original
-uz = dz_original / longitud_original
-
-# Definir el incremento de longitud en cada extremo
-incremento = 20  # En milímetros (ajusta este valor según necesites)
-
-# Calcular la nueva longitud total del cilindro
-longitud_nueva = longitud_original + 2 * incremento
-
-# Calcular los nuevos puntos inicial y final
-x0_nuevo = x_centro - (longitud_nueva / 2) * ux
-y0_nuevo = y_centro - (longitud_nueva / 2) * uy
-z0_nuevo = z_centro - (longitud_nueva / 2) * uz
-
-x1_nuevo = x_centro + (longitud_nueva / 2) * ux
-y1_nuevo = y_centro + (longitud_nueva / 2) * uy
-z1_nuevo = z_centro + (longitud_nueva / 2) * uz
-
-# Calcular el nuevo vector dirección
-dx_nuevo = x1_nuevo - x0_nuevo
-dy_nuevo = y1_nuevo - y0_nuevo
-dz_nuevo = z1_nuevo - z0_nuevo
-
-# Definir el radio del cilindro
-radio_cilindro_central = 1  # Ajusta según el diámetro del cable
-
-# Crear el cilindro con los nuevos parámetros
-cilindro_central_tag = factory.addCylinder(
-    x0_nuevo, y0_nuevo, z0_nuevo,  # Nuevo punto de inicio
-    dx_nuevo, dy_nuevo, dz_nuevo,  # Nuevo vector dirección
-    radio_cilindro_central  # Radio del cilindro
-)
-
-# Sincronizar la geometría
 factory.synchronize()
 
-# Visualizar la figura con el cilindro antes del corte
-# launchGUI()
+# ==============================================================================
+#                        AGREGAR PARCHE MAGTEC (LATERAL)
+# ==============================================================================
 
-# Realizar el corte de la garra completa con el cilindro central
-cut_result_cilindro = factory.cut(full_gripper, [(3, cilindro_central_tag)])
+# 1. Calcular geometría y posición
+x1, y1 = GripperWidth, 0
+x2, y2 = WallThickness, GripperHeight + GripperHeightGift
 
-# Obtener el volumen resultante después del corte
-if cut_result_cilindro[0]:
-    full_gripper_con_hueco = cut_result_cilindro[0]
-    print("Garra con hueco para el cable:", full_gripper_con_hueco)
-else:
-    print("Error: No se creó ninguna entidad durante el corte con el cilindro central.")
+dx = x2 - x1
+dy = y2 - y1
+wall_angle = np.arctan2(dy, dx) 
 
-# Sincronizar después del corte
+mid_x = (x1 + x2) / 2
+mid_y = (y1 + y2) / 2
+z_pos = (Depth + borde) - (PatchWidth / 2)
+
+# 2. Crear el parche ORIGINAL
+patch_tag = factory.addBox(-PatchLength/2, 0, z_pos, PatchLength, PatchHeight, PatchWidth)
+
+# 3. Orientar y Posicionar el parche original
+factory.rotate([(3, patch_tag)], 0, 0, 0, 0, 0, 1, wall_angle)
+factory.translate([(3, patch_tag)], mid_x, mid_y, 0)
+
+# ------------------------------------------------------------------
+# TRUCO: Copiar el parche antes de fusionarlo.
+# 'patch_iso' quedará suelto en el mundo para poder exportarlo solo.
+# ------------------------------------------------------------------
+patch_iso = factory.copy([(3, patch_tag)])
+
+# 4. Fusionar el parche ORIGINAL con la GARRA COMPLETA
+# (El patch_tag original se consume aquí y pasa a ser parte de result_mesh)
+full_gripper_with_patch = factory.fuse(full_gripper, [(3, patch_tag)])
+result_mesh = full_gripper_with_patch[0]
+
 factory.synchronize()
+print("Parche MagTec agregado y preparado para exportación independiente.")
+# ==============================================================================
 
-############################### CILINDRO EN EL CENTRO ##############################
+# --- 6. Generación de Malla y Exportación ---
 
+output_file_stl = "Tesis/Scenes/Geometries/FinRay.stl"
+output_file_patch = "Tesis/Scenes/Geometries/MagTecPatch.stl" # Nuevo archivo
+output_file_vtk = "Tesis/Scenes/Geometries/FinRay.vtk"
 
+# IMPORTANTE: Configuración para guardar solo lo que queremos
+# Mesh.SaveAll = 0 hace que Gmsh solo guarde lo que está en un "Physical Group"
+gmsh.option.setNumber("Mesh.SaveAll", 0) 
 
-
-
-print(f"ExtrudeOut:{ExtrudeOut}")
+# --- A) Mallado de Superficie (STL) ---
+print(f"Mallando superficie...")
+gmsh.option.setNumber("Mesh.CharacteristicLengthFactor", densidad_malla_stl)  
 factory.synchronize()
-# defineMeshSizes(2)
-gmsh.model.mesh.generate(3)
-gmsh.write("FinRay.vtk")
-gmsh.model.mesh.clear()
-gmsh.model.mesh.generate(2)
-gmsh.model.mesh.refine()
-gmsh.model.mesh.refine()
-gmsh.write("FinRay.stl")
+gmsh.model.mesh.generate(2) # Generamos malla 2D
+
+# 1. EXPORTAR SOLO EL PARCHE (MagTecPatch.stl)
+# Obtenemos las superficies del parche aislado (copia)
+surfaces_patch = gmsh.model.getBoundary(patch_iso, combined=True, oriented=False)
+tags_patch = [t[1] for t in surfaces_patch]
+# Creamos un grupo físico temporal solo para el parche
+pg_patch = gmsh.model.addPhysicalGroup(2, tags_patch)
+print(f"Guardando {output_file_patch}...")
+gmsh.write(output_file_patch)
+# Borramos el grupo físico para no ensuciar el siguiente paso
+gmsh.model.removePhysicalGroups([(2, pg_patch)])
+
+# 2. EXPORTAR LA GARRA COMPLETA FUSIONADA (FinRay.stl)
+# Obtenemos las superficies de la garra final (que ya incluye el parche fusionado)
+surfaces_gripper = gmsh.model.getBoundary(result_mesh, combined=True, oriented=False)
+tags_gripper = [t[1] for t in surfaces_gripper]
+# Creamos un grupo físico temporal
+pg_gripper = gmsh.model.addPhysicalGroup(2, tags_gripper)
+print(f"Guardando {output_file_stl}...")
+gmsh.write(output_file_stl)
+gmsh.model.removePhysicalGroups([(2, pg_gripper)])
+
+
+# --- B) Mallado de Volumen (VTK) ---
+print(f"Mallando volumen (VTK)...")
+gmsh.model.mesh.clear() # Limpiar malla 2D anterior
+gmsh.option.setNumber("Mesh.CharacteristicLengthFactor", densidad_malla_vtk)  
+factory.synchronize()
+gmsh.model.mesh.generate(3) # Generar 3D
+
+# 3. EXPORTAR VOLUMEN COMPLETO (FinRay.vtk)
+# Creamos grupo físico del volumen final
+pg_vol = gmsh.model.addPhysicalGroup(3, [result_mesh[0][1]])
+print(f"Guardando {output_file_vtk}...")
+gmsh.write(output_file_vtk)
+gmsh.model.removePhysicalGroups([(3, pg_vol)])
+
+# Finalización
 factory.synchronize()
 launchGUI()
 exit()
